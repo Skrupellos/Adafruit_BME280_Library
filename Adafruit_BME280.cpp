@@ -343,9 +343,10 @@ uint32_t Adafruit_BME280::read24(byte reg) {
 
 /*!
  *  @brief  Take a new measurement (only possible in forced mode)
-    @returns true in case of success else false
+ *  @param timeout Wait timeout milliseconds for measurement to complete (default: 2000ms)
+ *  @returns true in case of success else false
  */
-bool Adafruit_BME280::takeForcedMeasurement(void) {
+bool Adafruit_BME280::takeForcedMeasurement(uint32_t timeout) {
   bool return_value = false;
   // If we are in forced mode, the BME sensor goes back to sleep after each
   // measurement and we need to set it to forced mode once at this point, so
@@ -355,13 +356,16 @@ bool Adafruit_BME280::takeForcedMeasurement(void) {
     return_value = true;
     // set to forced mode, i.e. "take next measurement"
     write8(BME280_REGISTER_CONTROL, _measReg.get());
+    if (timeout == 0) {
+      return false;
+    }
     // Store current time to measure the timeout
     uint32_t timeout_start = millis();
     // wait until measurement has been completed, otherwise we would read the
     // the values from the last measurement or the timeout occurred after 2 sec.
-    while (read8(BME280_REGISTER_STATUS) & 0x08) {
+    while (isMeasuring()) {
       // In case of a timeout, stop the while loop
-      if ((millis() - timeout_start) > 2000) {
+      if ((millis() - timeout_start) > timeout) {
         return_value = false;
         break;
       }
@@ -369,6 +373,14 @@ bool Adafruit_BME280::takeForcedMeasurement(void) {
     }
   }
   return return_value;
+}
+
+/*!
+ *  @brief  Returns whether there is currently a measurement in progress
+ *  @returns true if measuring else false
+ */
+bool Adafruit_BME280::isMeasuring(void) {
+  return read8(BME280_REGISTER_STATUS) & (1 << 3);
 }
 
 /*!

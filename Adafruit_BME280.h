@@ -225,7 +225,8 @@ public:
                    sensor_filter filter = FILTER_OFF,
                    standby_duration duration = STANDBY_MS_0_5);
 
-  bool takeForcedMeasurement(void);
+  bool takeForcedMeasurement(uint32_t timeout = 2000);
+  bool isMeasuring(void);
   float readTemperature(void);
   float readPressure(void);
   float readHumidity(void);
